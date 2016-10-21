@@ -5,7 +5,7 @@ import sys
 
 server = "169.254.169.254"
 port = "80"
-mdUrl = "http://" + server + ":" + port + "/metadata/latest/e/"
+mdUrl = "http://" + server + ":" + port + "/metadata/latest/"
 
 def restCall(mdUrl):
     header={'Metadata': 'True'}
