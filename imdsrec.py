@@ -4,7 +4,7 @@ import urllib.request
 import sys
 
 server = "169.254.169.254"
-port = "90"
+port = "80"
 mdUrl = "http://" + server + ":" + port + "/metadata/latest/instance/"
 
 def restCall(mdUrl):
