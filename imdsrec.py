@@ -3,7 +3,7 @@ import json
 import urllib.request
 import sys
 
-server = "127.0.0.1"
+server = "169.254.169.254"
 port = "90"
 mdUrl = "http://" + server + ":" + port + "/metadata/latest/instance/"
 
