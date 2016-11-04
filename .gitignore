@@ -1,25 +1,3 @@
-# Everything outside the src directory
-/*
-/*/
-!/src/
-!/.config/.targets/_BeforeAll.targets
-!/.config/.targets/_AfterAll.targets
-!/.config/corext.template.config
-!/.config/corext.config
-!owners.txt
-out
-
-# Build generated files in src
-/src/**/objd/**/*
-/src/**/obj/**/*
-/src/**/bin/**/*
-/src/**/gen/**/*
-/src/**/*.nuspec
-/src/**/StyleCop.Cache
-
-!/src/test/artifacts/HostAgentTestArtifacts.nuspec
-!/src/Tools/loganalysis/data/HostAgentLogArtifacts.nuspec
-
 # MSBuild's log file
 msbuild.*
 
