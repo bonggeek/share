@@ -27,8 +27,10 @@ import sys
 import urllib2
 import requests
 import Adafruit_DHT
+import RPi.GPIO as GPIO
 import json
 import time
+import datetime
 
 url = "http://192.168.1.42/api/Thing"
 deviceId = "b1d943ce-725d-4fe4-97b3-c868032df95f"
@@ -67,8 +69,7 @@ def registerDevice(deviceId):
 
     return token
 
-
-def sendData(url, deviceId, token, temperature, humidity ):
+def sendData(url, deviceId, token, temperature, humidity, motion):
     jsonDataStr = """
     {{
         "Id": "{}",
@@ -80,61 +81,98 @@ def sendData(url, deviceId, token, temperature, humidity ):
             {{
                 "Name": "humidity",
                 "Value": "{}"
+            }},
+            {{
+                "Name": "motion",
+                "Value": "{}"
             }}
+
         ]
     }}
     """
-    formattedStr = jsonDataStr.format(deviceId, temperature, humidity)
+    formattedStr = jsonDataStr.format(deviceId, temperature, humidity, motion)
 
     headers = {'Content-type': 'application/json', 'AccessToken' : token}
     r = requests.post(url, data=formattedStr, headers=headers)
-    print("Got response {}".format(r.status_code))
-    
-    return r.status_code
+    statusCode = r.status_code
+    print("Got response {}".format(statusCode))
 
+    if(statusCode == 404 or statusCode == 401):
+        # Failed with unknown device, reattempt registering
+        token = registerDevice(deviceId)
+        if token:
+            r = requests.post(url, data=formattedStr, headers=headers)
+            print("Re-attempt got response {}", r.status_code)
+        else:
+            print("Failed to register as well, giving up on data send")
 
-token = registerDevice(deviceId)
+# returns True is motion is detected
+def readMotion(pin):
+    m = GPIO.input(pin)
+    return m == 1
 
+def readSensor(sensor, pin):
+    # Try to grab a sensor reading.  Use the read_retry method which will retry up
+    # to 15 times to get a sensor reading (waiting 2 seconds between each retry).
+    humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
+    return humidity, temperature
+
+# =================================================================================================================
 # Parse command line parameters.
 sensor_args = { '11': Adafruit_DHT.DHT11,
                 '22': Adafruit_DHT.DHT22,
                 '2302': Adafruit_DHT.AM2302 }
-if len(sys.argv) == 3 and sys.argv[1] in sensor_args:
+if len(sys.argv) == 4 and sys.argv[1] in sensor_args:
     sensor = sensor_args[sys.argv[1]]
-    pin = sys.argv[2]
+    sensorPin = sys.argv[2]
+    PIRPin = int(sys.argv[3])
 else:
-    print('usage: sudo ./Adafruit_DHT.py [11|22|2302] GPIOpin#')
-    print('example: sudo ./Adafruit_DHT.py 2302 4 - Read from an AM2302 connected to GPIO #4')
+    print('usage: sudo ./Adafruit_DHT.py [11|22|2302] SensorGPIOpin# PIRGPIOpin#')
+    print('example: sudo ./Adafruit_DHT.py 11 3 4 - Read from a DHT11 connected to GPIO #3 and PIR sensor to #4')
     sys.exit(1)
 
-dataPush = 0
+# =================================================================================================================
+# Initial setup device and initial reaidings
+GPIO.setmode(GPIO.BCM)
+GPIO.setup(PIRPin, GPIO.IN)
+
+token = registerDevice(deviceId)
+motion = False
+humidity, temperature = readSensor(sensor, sensorPin)
+print('Initial Reading Temp={0:0.1f}*  Humidity={1:0.1f}% Motion={2}'.format(temperature, humidity, motion))
+
+
+# =================================================================================================================
+# Loop to read and push data
+lastMotionTime = 0.0
+lastSensorTime = 0.0
 while True:
-    print("======================= Data Push %d =========================" % dataPush)
-    dataPush += 1
-    # Try to grab a sensor reading.  Use the read_retry method which will retry up
-    # to 15 times to get a sensor reading (waiting 2 seconds between each retry).
-    humidity, temperature = Adafruit_DHT.read_retry(sensor, pin)
 
-    # Un-comment the line below to convert the temperature to Fahrenheit.
-    #temperature = temperature * 9/5.0 + 32
+    currTime = time.time()
 
-    # Note that sometimes you won't get a reading and
-    # the results will be null (because Linux can't
-    # guarantee the timing of calls to read the sensor).
-    # If this happens try again!
-    if humidity is not None and temperature is not None:
-        print('Temp={0:0.1f}*  Humidity={1:0.1f}%'.format(temperature, humidity))
-        statusCode = sendData(url, deviceId, token, temperature, humidity)
-        if(statusCode == 404 or statusCode == 401):
-            # Failed with unknown device, reattempt registering
-            token = registerDevice(deviceId)
-            if token:
-                statusCode = sendData(url, deviceId, token, temperature, humidity)
-            else:
-                print("Failed to register as well")
+    # Check for motion very often and once you find it do not check for a few secs
+    if(currTime - lastMotionTime >= 10.0):
+        motion = readMotion(PIRPin)
+        if(motion):
+            statusCode = sendData(url, deviceId, token, temperature, humidity, motion)
+            lastMotionTime = time.time()
+            print('{0} Motion!!! Temp={1:0.1f}*  Humidity={2:0.1f}% Motion={3}'.format(datetime.datetime.now(), temperature, humidity, motion))
+            motion = False
 
-    else:
-        print('Failed to get reading. Try again!')
+    # Check sensor every 60 seconds
+    if(currTime - lastSensorTime) > 60:
+        humidity, temperature = readSensor(sensor, sensorPin)
 
-    time.sleep(5)
+        # Un-comment the line below to convert the temperature to Fahrenheit.
+        #temperature = temperature * 9/5.0 + 32
+
+        if humidity is not None and temperature is not None:
+            print('{0} Temp={1:0.1f}*  Humidity={2:0.1f}% Motion={3}'.format(datetime.datetime.now(), temperature, humidity, motion))
+            statusCode = sendData(url, deviceId, token, temperature, humidity, motion)
+            lastSensorTime = time.time()
+            
+        else:
+            print('Failed to get reading. Try again!')
+
+    time.sleep(0.01)
 
