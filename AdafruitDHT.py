@@ -73,6 +73,7 @@ def sendData(url, deviceId, token, temperature, humidity, motion):
     jsonDataStr = """
     {{
         "Id": "{}",
+        "TimeStamp": {},
         "Data" : [
             {{
                 "Name": "temperature",
@@ -90,8 +91,9 @@ def sendData(url, deviceId, token, temperature, humidity, motion):
         ]
     }}
     """
-    formattedStr = jsonDataStr.format(deviceId, temperature, humidity, motion)
+    formattedStr = jsonDataStr.format(deviceId, time.time() * 1000, temperature, humidity, motion)
 
+    print('Sending {0} Temp={1:0.1f}*  Humidity={2:0.1f}% Motion={3}'.format(datetime.datetime.now(), temperature, humidity, motion))
     headers = {'Content-type': 'application/json', 'AccessToken' : token}
     r = requests.post(url, data=formattedStr, headers=headers)
     statusCode = r.status_code
@@ -151,13 +153,11 @@ while True:
     currTime = time.time()
 
     # Check for motion very often and once you find it do not check for a few secs
-    if(currTime - lastMotionTime >= 10.0):
-        motion = readMotion(PIRPin)
-        if(motion):
-            statusCode = sendData(url, deviceId, token, temperature, humidity, motion)
-            lastMotionTime = time.time()
-            print('{0} Motion!!! Temp={1:0.1f}*  Humidity={2:0.1f}% Motion={3}'.format(datetime.datetime.now(), temperature, humidity, motion))
-            motion = False
+    motion = readMotion(PIRPin)
+    if (motion and (currTime - lastMotionTime >= 10.0)):
+        statusCode = sendData(url, deviceId, token, temperature, humidity, motion)
+        lastMotionTime = currTime
+        continue
 
     # Check sensor every 60 seconds
     if(currTime - lastSensorTime) > 60:
@@ -167,7 +167,6 @@ while True:
         #temperature = temperature * 9/5.0 + 32
 
         if humidity is not None and temperature is not None:
-            print('{0} Temp={1:0.1f}*  Humidity={2:0.1f}% Motion={3}'.format(datetime.datetime.now(), temperature, humidity, motion))
             statusCode = sendData(url, deviceId, token, temperature, humidity, motion)
             lastSensorTime = time.time()
             
