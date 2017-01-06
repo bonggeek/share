@@ -142,12 +142,15 @@ token = registerDevice(deviceId)
 motion = False
 humidity, temperature = readSensor(sensor, sensorPin)
 print('Initial Reading Temp={0:0.1f}*  Humidity={1:0.1f}% Motion={2}'.format(temperature, humidity, motion))
+lastHumidity = humidity
+lastTemp = temperature
 
 
 # =================================================================================================================
 # Loop to read and push data
 lastMotionTime = 0.0
 lastSensorTime = 0.0
+
 while True:
 
     currTime = time.time()
@@ -160,18 +163,24 @@ while True:
         continue
 
     # Check sensor every 60 seconds
-    if(currTime - lastSensorTime) > 60:
-        humidity, temperature = readSensor(sensor, sensorPin)
+    if(currTime - lastSensorTime) > 10:
+        for i in range(0,5):
+            humidity, temperature = readSensor(sensor, sensorPin)
+
+            # sometimes weird data comes, reject if data varies from last a lot and retake data
+            if( humidity is not None and temperature is not None and  humidity < 110 and (abs(humidity-lastHumidity)/lastHumidity)< 0.3) and ((abs(temperature - lastTemp)/lastTemp) < 0.3):
+                break
+
+            print("Wide change in data {} {}, retake".format(temperature, humidity))
+
+        lastHumidity = humidity
+        lastTemp = temperature
 
         # Un-comment the line below to convert the temperature to Fahrenheit.
         #temperature = temperature * 9/5.0 + 32
 
-        if humidity is not None and temperature is not None:
-            statusCode = sendData(url, deviceId, token, temperature, humidity, motion)
-            lastSensorTime = time.time()
-            
-        else:
-            print('Failed to get reading. Try again!')
+        statusCode = sendData(url, deviceId, token, temperature, humidity, motion)
+        lastSensorTime = time.time()
 
     time.sleep(0.01)
 
