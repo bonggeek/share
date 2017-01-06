@@ -33,7 +33,6 @@ import time
 import datetime
 
 url = "http://192.168.1.42/api/Thing"
-deviceId = "b1d943ce-725d-4fe4-97b3-c868032df95f"
 
 def registerDevice(deviceId):
     jsonDeviceStr = """
@@ -124,13 +123,14 @@ def readSensor(sensor, pin):
 sensor_args = { '11': Adafruit_DHT.DHT11,
                 '22': Adafruit_DHT.DHT22,
                 '2302': Adafruit_DHT.AM2302 }
-if len(sys.argv) == 4 and sys.argv[1] in sensor_args:
+if len(sys.argv) == 5 and sys.argv[1] in sensor_args:
     sensor = sensor_args[sys.argv[1]]
     sensorPin = sys.argv[2]
     PIRPin = int(sys.argv[3])
+    deviceId = sys.argv[4]
 else:
-    print('usage: sudo ./Adafruit_DHT.py [11|22|2302] SensorGPIOpin# PIRGPIOpin#')
-    print('example: sudo ./Adafruit_DHT.py 11 3 4 - Read from a DHT11 connected to GPIO #3 and PIR sensor to #4')
+    print('usage: ./Adafruit_DHT.py [11|22|2302] SensorGPIOpin# PIRGPIOpin# deviceId')
+    print('example: ./Adafruit_DHT.py 11 3 4 b1d943ce-725d-4fe4-97b3-c868032df95f - Read from a DHT11 connected to GPIO #3 and PIR sensor to #4')
     sys.exit(1)
 
 # =================================================================================================================
