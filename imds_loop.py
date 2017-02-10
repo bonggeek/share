@@ -46,7 +46,7 @@ class ImdsLogger:
     """
 
     def __init__(self, ext_name, ext_ver, ext_op_type, ext_event_logger, ext_logger=None,
-                 imds_data_getter=get_imds_data, logging_interval_in_minutes=60):
+                 imds_data_getter=get_imds_data, logging_interval_in_seconds=10):
         self._ext_name = ext_name
         self._ext_ver = ext_ver
         self._ext_op_type = ext_op_type
@@ -54,7 +54,7 @@ class ImdsLogger:
         self._ext_event_logger = ext_event_logger  # E.g., waagent.AddExtensionEvent
         self._last_log_time = None
         self._imds_data_getter = imds_data_getter
-        self._logging_interval = datetime.timedelta(minutes=logging_interval_in_minutes)
+        self._logging_interval = datetime.timedelta(seconds=logging_interval_in_seconds)
 
     def log_imds_data_if_right_time(self, log_as_ext_event=False):
         now = datetime.datetime.now()
@@ -106,7 +106,7 @@ if __name__ == '__main__':
 
     imds_logger = ImdsLogger('Microsoft.OSTCExtensions.LinuxDiagnostic', '2.3.9021', 'Heartbeat',
                              ext_logger=default_ext_logger, ext_event_logger=default_ext_event_logger,
-                             imds_data_getter=fake_get_imds_data, logging_interval_in_minutes=1)
+                             imds_data_getter=fake_get_imds_data, logging_interval_in_seconds=10)
     start_time = datetime.datetime.now()
     done = False
     while not done:
