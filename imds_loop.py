@@ -106,7 +106,7 @@ if __name__ == '__main__':
 
     imds_logger = ImdsLogger('Microsoft.OSTCExtensions.LinuxDiagnostic', '2.3.9021', 'Heartbeat',
                              ext_logger=default_ext_logger, ext_event_logger=default_ext_event_logger,
-                             imds_data_getter=fake_get_imds_data, logging_interval_in_seconds=10)
+                             imds_data_getter=get_imds_data, logging_interval_in_seconds=10)
     start_time = datetime.datetime.now()
     done = False
     while not done:
