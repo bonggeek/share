@@ -6,9 +6,11 @@ import sys
 server = "169.254.169.254"
 port = "80"
 mdUrl = "http://" + server + ":" + port + "/metadata/latest/instance/"
+format = "?format=text"
 
 def restCall(mdUrl):
     header={'Metadata': 'True'}
+    mdUrl = mdUrl+format
     request = urllib.request.Request(url=mdUrl, headers=header)
     response = urllib.request.urlopen(request)
     data = response.read()
