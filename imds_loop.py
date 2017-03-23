@@ -31,7 +31,10 @@ def get_imds_data(node, json=True):
         return None
     if node[0] != '/':
         node = '/' + node
-    imds_url = 'http://169.254.169.254{0}{1}'.format(node, '?format=json' if json else '')
+    """
+    Use internal unsupported API to ping IMDS
+    """
+    imds_url = 'http://169.254.169.254{0}{1}'.format(node, '?format=json&api-version=latest_internal' if json else '')
     imds_headers = {'Metadata': 'True'}
     req = urllib2.Request(url=imds_url, headers=imds_headers)
     resp = urllib2.urlopen(req)
@@ -63,7 +66,7 @@ class ImdsLogger:
             return
 
         try:
-            imds_data = self._imds_data_getter('/metadata/latest/instance/')
+            imds_data = self._imds_data_getter('/metadata/instance/')
         except Exception as e:
             if self._ext_logger:
                 self._ext_logger('Exception occurred while getting IMDS data: {0}\n'

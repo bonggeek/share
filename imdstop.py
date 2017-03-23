@@ -5,8 +5,8 @@ import sys
 
 server = "169.254.169.254"
 port = "80"
-mdUrl = "http://" + server + ":" + port + "/metadata/latest/instance/"
-mdUrlJson =  mdUrl + "?format=json"
+mdUrl = "http://" + server + ":" + port + "/metadata/instance/"
+mdUrlJson =  mdUrl + "?format=json&api-version=latest_internal"
 
 def restCall(mdUrl):
     header={'Metadata': 'True'}
