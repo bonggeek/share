@@ -6,11 +6,20 @@ import json
 import sys 
 import requests
 import traceback
+import json
 
 ip = '169.254.169.254'
 port = '80'
+default_version = 'latest'
 
-def restCall(resPath, version='latest_internal', format='json', imds_headers = {'Metadata': 'True'}):
+def is_json(myjson):
+  try:
+    json_object = json.loads(myjson)
+  except ValueError:
+    return False
+  return True
+
+def restCall(resPath, format='json', version=default_version, imds_headers = {'Metadata': 'True'}):
     mdUrl = 'http://{0}:{1}/{2}?api-version={3}&format={4}'.format(ip, port, resPath, version, format)
     print('Calling {}'.format(mdUrl))
     resp = requests.get(url=mdUrl, headers=imds_headers)
@@ -32,26 +41,59 @@ def restCallRaw(subUrl, imds_headers = {'Metadata': 'True'}):
 
 def baseTest():
     subUrl = 'metadata/instance'
-    code,content = restCall(subUrl, '2017-03-01')
+    code,content = restCall(subUrl, 'json', '2017-03-01')
     if(code == 200 and len(content) > 0):
         return True
 
 def defaultFormat():
+    # Verify that default format is correct
     url1 = 'metadata/instance?api-version=latest'
     url2 = 'metadata/instance?api-version=latest&format=json'
     code1,content1 = restCallRaw(url1)
     code2,content2 = restCallRaw(url2)
     if(code1 != 200 or code1 != code2):
         print('Status code 200 expected')
-        return false
+        return False
 
     if (content1 != content2):
         print('default format does not match json')
-        return false
+        return False
+
+    if not is_json(content1):
+        print("Default was not JSON")
+        return False
+
+    # Verify that default format of errors is correct
+    url1 = 'metadata/instance/blah?api-version=latest'
+    url2 = 'metadata/instance/blah?api-version=latest&format=json'
+
+    code1,content1 = restCallRaw(url1)
+    code2,content2 = restCallRaw(url2)
+    if(code1 != 404 or code1 != code2):
+        print('Status code 404 expected')
+        return False
+
+    if (content1 != content2):
+        print('default format does not match json')
+        return False
+
+    if not is_json(content1):
+        print("Default was not JSON")
+        return False
 
     return True
 
-testList = [baseTest, defaultFormat]
+def urlPrefix():
+    url = 'metadata'
+    code,cont = restCall(url, 'text')
+    if not cont == 'instance/':
+        print('root metadata call returned invalid value')
+        return False
+
+    return True;    
+
+# List of tests to run
+testList = [baseTest, defaultFormat, urlPrefix]
 
 def runTests():
     passCount = 0
