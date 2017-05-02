@@ -47,8 +47,8 @@ def baseTest():
 
 def defaultFormat():
     # Verify that default format is correct
-    url1 = 'metadata/instance?api-version=latest'
-    url2 = 'metadata/instance?api-version=latest&format=json'
+    url1 = 'metadata/instance?api-version={}'.format(default_version)
+    url2 = 'metadata/instance?api-version={}&format=json'.format(default_version)
     code1,content1 = restCallRaw(url1)
     code2,content2 = restCallRaw(url2)
     if(code1 != 200 or code1 != code2):
