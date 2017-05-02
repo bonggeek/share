@@ -10,7 +10,8 @@ import json
 
 ip = '169.254.169.254'
 port = '80'
-default_version = 'latest'
+default_version = 'latest_internal'
+default_headers = {'Metadata' : 'True'}
 
 def is_json(myjson):
   try:
@@ -19,7 +20,10 @@ def is_json(myjson):
     return False
   return True
 
-def restCall(resPath, format='json', version=default_version, imds_headers = {'Metadata': 'True'}):
+def createUrl(resPath):
+    return 'http://{0}:{1}/{2}'.format(ip, port, resPath)
+
+def restCall(resPath, format='json', version=default_version, imds_headers = default_headers):
     mdUrl = 'http://{0}:{1}/{2}?api-version={3}&format={4}'.format(ip, port, resPath, version, format)
     print('Calling {}'.format(mdUrl))
     resp = requests.get(url=mdUrl, headers=imds_headers)
@@ -113,15 +117,61 @@ def queryVar():
     if (code != 400):
         print('Duplicate cid not failed')
         return False
+ 
+    url = 'metadata/instance?api-version={}&foo=bar'.format(default_version)
+    code, cont = restCallRaw(url)
+    if (code != 400):
+        print('Unknown query variable not failed')
+        return False
+ 
+    url = 'metadata/instance?api-version={}&format=csv'.format(default_version)
+    code, cont = restCallRaw(url)
+    if (code != 400 or 'Unsupported format string' not in cont):
+        print('Unknown format string not failed')
+        return False
         
     return True
 
+def onlyGet():
+    mdUrl = createUrl('metadata?api-version={}&format=text'.format(default_version))
+    resp = requests.post(url=mdUrl, headers=default_headers)
+    if(resp.status_code != 400):
+        print('POST was not faild')
+        return False
+  
+    resp = requests.post(url=mdUrl, headers=default_headers)
+    if(resp.status_code != 400):
+        print('POST was not failed and got ', resp.status_code)
+        return False
+    print('POST check passed')
+    
+    resp = requests.put(url=mdUrl, headers=default_headers)
+    if(resp.status_code != 400):
+        print('PUT was not failed and got ', resp.status_code)
+        return False
+    print('PUT check passed')
+    
+    resp = requests.delete(url=mdUrl, headers=default_headers)
+    if(resp.status_code != 400):
+        print('DELETE was not failed and got ', resp.status_code)
+        return False
+    print('DELETE check passed')
+    
+    resp = requests.options(url=mdUrl, headers=default_headers)
+    if(resp.status_code != 400):
+        print('OPTIONS was not failed and got ', resp.status_code)
+        return False
+    print('OPTIONS check passed')
+ 
+    return True
+
 # List of tests to run
-testList = [baseTest, defaultFormat, urlPrefix, versionTests, queryVar]
+testList = [baseTest, defaultFormat, urlPrefix, versionTests, queryVar, onlyGet]
 
 def runTests():
     passCount = 0
     failCount = 0
+    failedTests = []
     for test in testList:
         print('--------------------------------------------------')
         print('Running Test: {}'.format(test.__name__))
@@ -133,9 +183,13 @@ def runTests():
         else:
             failCount += 1
             print('FAIL')
+            failedTests.append(test.__name__)
 
     print('==================================================')
     print('{} tests passed, {} tests failed'.format(passCount, failCount))
+    if failCount > 0:
+        print('Following tests failed')
+        print(*failedTests, sep='\n')
     return failCount == 0
 
 try:
