@@ -101,14 +101,23 @@ def versionTests():
 
     # No version should fail
     code, cont = restCallRaw('metadata/instance')
-    if(code != 404 or 'Invalid version' not in cont):
+    if(code != 400 or 'version was not specified' not in cont):
         print('Invalid version was not failed')
         return False
 
     return True
 
+def queryVar():
+    url = 'metadata/instance?api-version={}&cid=42'.format(default_version)
+    code, cont = restCallRaw(url)
+    if (code != 400):
+        print('Duplicate cid not failed')
+        return False
+        
+    return True
+
 # List of tests to run
-testList = [baseTest, defaultFormat, urlPrefix, versionTests]
+testList = [baseTest, defaultFormat, urlPrefix, versionTests, queryVar]
 
 def runTests():
     passCount = 0
