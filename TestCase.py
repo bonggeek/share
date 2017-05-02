@@ -64,8 +64,8 @@ def defaultFormat():
         return False
 
     # Verify that default format of errors is correct
-    url1 = 'metadata/instance/blah?api-version=latest'
-    url2 = 'metadata/instance/blah?api-version=latest&format=json'
+    url1 = 'metadata/instance/blah?api-version={}'.format(default_version)
+    url2 = 'metadata/instance/blah?api-version={}&format=json'.format(default_version)
 
     code1,content1 = restCallRaw(url1)
     code2,content2 = restCallRaw(url2)
@@ -92,8 +92,23 @@ def urlPrefix():
 
     return True;    
 
+def versionTests():
+    # bad version should FAIL
+    code, cont = restCall('metadata', 'text', 'blahversion')
+    if(code != 404 or 'Invalid version' not in cont):
+        print('Invalid version was not failed')
+        return False
+
+    # No version should fail
+    code, cont = restCallRaw('metadata/instance')
+    if(code != 404 or 'Invalid version' not in cont):
+        print('Invalid version was not failed')
+        return False
+
+    return True
+
 # List of tests to run
-testList = [baseTest, defaultFormat, urlPrefix]
+testList = [baseTest, defaultFormat, urlPrefix, versionTests]
 
 def runTests():
     passCount = 0
