@@ -23,14 +23,25 @@ def is_json(myjson):
 def createUrl(resPath):
     return 'http://{0}:{1}/{2}'.format(ip, port, resPath)
 
-def restCall(resPath, format='json', version=default_version, imds_headers = default_headers):
+def restCall(resPath, format='json', version=default_version, imds_headers = default_headers, verbose=True):
     mdUrl = 'http://{0}:{1}/{2}?api-version={3}&format={4}'.format(ip, port, resPath, version, format)
-    print('Calling {}'.format(mdUrl))
-    resp = requests.get(url=mdUrl, headers=imds_headers)
-    code = resp.status_code
-    cont = bytes.decode(resp.content)
-    print(code)
-    print(cont)
+    if verbose:
+        print('Calling {}'.format(mdUrl))
+    val = 0
+    while val < 5:
+        resp = requests.get(url=mdUrl, headers=imds_headers)
+        code = resp.status_code
+        cont = bytes.decode(resp.content)
+        if code == 429:
+            print('Too many request encountered, sleeping')
+            time.sleep(5)
+            val += 1
+            continue
+        if verbose:
+            print(code)
+            print(cont)
+        break
+
     return code, cont
 
 def restCallRaw(subUrl, imds_headers = {'Metadata': 'True'}):
@@ -165,8 +176,82 @@ def onlyGet():
  
     return True
 
+def requestHeader():
+    code, cont = restCall('metadata', 'json', default_version, {})
+    if(code != 400 or 'Required metadata header not specified' not in cont):
+        print('Required header was not required')
+        return False
+    else:
+        print('Required header was needed')
+
+    code, cont = restCall('metadata', 'text', default_version, {'Metadata': 'True', 'X-Forwarded-For' : 'Blah'})
+    if(code != 400):
+        print('Bad header was not blocked')
+        return False
+    else:
+        print('X-Forwarded-For header was blocked')
+
+    return True
+
+def responseHeaders():
+    mdUrl = createUrl('metadata?api-version={}&format=text'.format(default_version))
+    resp = requests.get(url=mdUrl, headers=default_headers)
+    if(resp.status_code != 200):
+        print('Request failed faild')
+        return False
+    
+    if 'text/plain; charset=utf-8' not in resp.headers['Content-Type']:
+        print('Content type was not correct')
+        return False
+    else:
+        print('Correct content type ', resp.headers['Content-Type'])
+
+    exp_length = int(resp.headers['Content-Length'])
+    act_length = len(resp.text)
+    print('Length header ', exp_length)
+    print('text length ', act_length)
+    if(exp_length != act_length):
+        print('header specified length does not match with text length')
+        return False
+
+    return True
+
+def recursiveHelper(subPath):
+    code,cont = restCall(subPath, 'text', default_version, default_headers, False)
+    if(code != 200):
+        print('Error!! Call to {} failed with {}'.format(subPath, code))
+        return False
+
+    for l in cont.splitlines():
+        if not l.endswith('/'):
+            newPath = subPath + '/' + l
+            code,res = restCall(newPath, 'text', default_version, default_headers, False)
+            if code == 200:
+                print(code, newPath, res)
+            else:
+                print('Error!! Call to {} failed with {}'.format(newPath, code))
+                return False
+        else:
+            newl = l[:-1]
+            newPath = subPath + '/' + newl
+            if not recursiveHelper(newPath):
+                return False
+
+    return True
+
+def recursiveCall():
+    if recursiveHelper('metadata'):
+        print('Recursive test passed')
+        return True
+    else:
+        print('Recursive test failed')
+        return False
+
 # List of tests to run
-testList = [baseTest, defaultFormat, urlPrefix, versionTests, queryVar, onlyGet]
+testList = [
+            baseTest, defaultFormat, urlPrefix, versionTests, queryVar, onlyGet, requestHeader, responseHeaders,
+            recursiveCall
+           ]
 
 def runTests():
     passCount = 0
@@ -175,15 +260,23 @@ def runTests():
     for test in testList:
         print('--------------------------------------------------')
         print('Running Test: {}'.format(test.__name__))
-        result = test()
-        print()
-        if(result):
-            passCount += 1
-            print('PASS')
-        else:
+        try:
+            result = test()
+            if(result):
+                passCount += 1
+                print('PASS')
+            else:
+                failCount += 1
+                print('FAIL')
+                failedTests.append(test.__name__)
+        except Exception as e:
+            print('Test threw exception')
+            traceback.print_stack()
+            traceback.print_exc()
             failCount += 1
             print('FAIL')
-            failedTests.append(test.__name__)
+
+        print()
 
     print('==================================================')
     print('{} tests passed, {} tests failed'.format(passCount, failCount))
