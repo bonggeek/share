@@ -251,9 +251,8 @@ def testCompute():
     code,content = restCall('metadata/instance/compute', 'json')
     if code != 200 or len(content) ==0 or not is_json(content):
         print('Did not get valid compute metadata')
-        return false
+        return False
 
-    retVal = True
     contJson = json.loads(content)
     expected = ['name',
                 'location',
@@ -268,6 +267,7 @@ def testCompute():
                 'vmSize'
                ]
     print()
+    retVal = True
     for key in expected:
         val = contJson.get(key)
         if val == None or len(val) == 0:
@@ -279,7 +279,40 @@ def testCompute():
     return retVal
 
 def testNetworking():
-    return True
+    code,content = restCall('metadata/instance/network/', 'json')
+    if code != 200 or len(content) ==0 or not is_json(content):
+        print('Did not get valid compute metadata')
+        return false
+
+    retVal = True
+    contJson = json.loads(content)
+
+    # Attempt querying expcted networking metadata values
+    # if it does not exist KeyError is thrown and that flags error
+    try:
+        val = contJson['interface'][0]['ipv4']['ipAddress'][0]['privateIpAddress']
+        print(val)
+
+        val = contJson['interface'][0]['ipv4']['ipAddress'][0]['publicIpAddress']
+        print(val)
+
+        val = contJson['interface'][0]['ipv4']['subnet'][0]['address']
+        print(val)
+
+        val = contJson['interface'][0]['ipv4']['subnet'][0]['prefix']
+        print(val)
+
+        val = contJson['interface'][0]['ipv6']['ipAddress']
+        print(val)
+
+        val = contJson['interface'][0]['macAddress']
+        print(val)
+
+    except KeyError as k:
+        retVal = False
+        print('Missing networking data point found', str(k))
+
+    return retVal
 
 # List of tests to run
 testList = [
@@ -296,19 +329,19 @@ def runTests():
         print('Running Test: {}'.format(test.__name__))
         try:
             result = test()
-            if(result):
-                passCount += 1
-                print('PASS')
-            else:
-                failCount += 1
-                print('FAIL')
-                failedTests.append(test.__name__)
         except Exception as e:
             print('Test threw exception')
             traceback.print_stack()
             traceback.print_exc()
+            result = False
+
+        if(result):
+            passCount += 1
+            print('PASS')
+        else:
             failCount += 1
             print('FAIL')
+            failedTests.append(test.__name__)
 
         print()
 
