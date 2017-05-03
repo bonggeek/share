@@ -247,10 +247,44 @@ def recursiveCall():
         print('Recursive test failed')
         return False
 
+def testCompute():
+    code,content = restCall('metadata/instance/compute', 'json')
+    if code != 200 or len(content) ==0 or not is_json(content):
+        print('Did not get valid compute metadata')
+        return false
+
+    retVal = True
+    contJson = json.loads(content)
+    expected = ['name',
+                'location',
+                'offer',
+                'osType',
+                'platformFaultDomain',
+                'platformUpdateDomain',
+                'publisher',
+                'sku',
+                'version',
+                'vmId',
+                'vmSize'
+               ]
+    print()
+    for key in expected:
+        val = contJson.get(key)
+        if val == None or len(val) == 0:
+            retVal = False
+            print('!!!!!! Computed data missing', key)
+        else:
+            print(key, val)
+
+    return retVal
+
+def testNetworking():
+    return True
+
 # List of tests to run
 testList = [
             baseTest, defaultFormat, urlPrefix, versionTests, queryVar, onlyGet, requestHeader, responseHeaders,
-            recursiveCall
+            recursiveCall, testCompute, testNetworking
            ]
 
 def runTests():
