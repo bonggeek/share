@@ -5,5 +5,6 @@ do
     | jq ".name" \
     | sed 's/.*_//' \
     | sed 's/"//'`
+  echo $nodeIndex
 done
 

@@ -4,17 +4,20 @@
 
 " Show fancy colors =============================================================
 syn on                              " Syntax highlighting on
-colorscheme morning                " choose a darker color scheme
+colorscheme darkblue                " choose a darker color scheme
 
 if has("gui_running")
-        set guifont=Consolas:h12 " use this font 
-        set lines=50                " height = 50 lines
-        set columns=120             " width = 150 columns
-        "Cursor settings
-        highlight Cursor guifg=white guibg=red
-        highlight iCursor guifg=white guibg=steelblue
-        set guicursor=n-v-c:Cursor-blinkon0
-        set guicursor+=i:ver25-iCursor-blinkwait20
+  if has("gui_gtk2") || has("gui_gtk3")
+    set guifont=Courier\ New\ 11
+  elseif has("gui_photon")
+    set guifont=Courier\ New:s11
+  elseif has("gui_kde")
+    set guifont=Courier\ New/11/-1/5/50/0/0/0/1/0
+  elseif has("x11")
+    set guifont=-*-courier-medium-r-normal-*-*-180-*-*-m-*-*
+  else
+    set guifont=Courier_New:h11:cDEFAULT
+  endif
 endif
 
 set ls=2                            " allways show status line
