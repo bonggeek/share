@@ -4,7 +4,7 @@
 
 " Show fancy colors =============================================================
 syn on                              " Syntax highlighting on
-colorscheme darkblue                " choose a darker color scheme
+colorscheme desert " choose a darker color scheme
 
 if has("gui_running")
   if has("gui_gtk2") || has("gui_gtk3")
