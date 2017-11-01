@@ -30,3 +30,6 @@ alias drun='docker run'
 alias dstop='docker stop'
 alias drm='docker rm'
 alias di='docker images'
+alias dpush='docker push'
+alias dpull='docker pull'
+
