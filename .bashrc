@@ -116,4 +116,6 @@ if ! shopt -oq posix; then
   fi
 fi
 
-export PATH=~/share:$PATH
+export GOPATH=$HOME/go
+export PATH=~/share:$PATH:$GOROOT/bin:$GOPATH/bin
+export DOCKER_ID_USER="bonggeek"
