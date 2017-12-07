@@ -8,6 +8,9 @@ alias t='cat'
 alias copy='cp'
 
 alias home='cd ~'
+alias del='rm'
+alias pu='pushd'
+alias po='popd'
 
 alias g='gvim'
 
@@ -34,4 +37,11 @@ alias di='docker images'
 alias dpush='docker push'
 alias dpull='docker pull'
 alias dlog='docker logs'
+
+
+alias hana='pushd ~/hanarp'
+alias src='pushd ~/hanarp/src'
+alias core='pushd ~/hanarp/src/core'
+alias cmd='pushd ~/hanarp/src/cmd'
+alias bin='pushd ~/hanarp/bin'
 
