@@ -20,6 +20,9 @@ if has("gui_running")
   endif
 endif
 
+set vb t_vb=
+set belloff=all
+
 set ls=2                            " allways show status line
 set number                          " show line numbers
 set nowrap                          " Don't wrap lines
@@ -37,7 +40,7 @@ set softtabstop=4                   " makes the spaces feel like real tabs. E.g.
 set backspace=indent,eol,start      " backspace deletes indent, eol and start line
 
 " Search options  ===============================================================
-set ignorecase                      " Ignore spaces in seach (I use Windows!!!!)
+set smartcase                       " Ignore spaces in seach (I use Windows!!!!)
 set incsearch                       " do incremental searching
 set hlsearch                        " highlight searches
 
@@ -52,3 +55,7 @@ map <f6>  :!build %:p:h <cr>        " F6 builds
 map <C-f6>  :!build -c %:p:h <cr>   " Ctrl+F6 clean builds
 map <c-t> :silent !tf edit % <cr>   " Ctrl+t checks out file (tf -edit)
 map <c-d> :silent !tf diff % <cr>   " ctrl+d does a tf -diff of the current file
+
+execute pathogen#infect()
+filetype plugin indent on
+set rtp+=$GOPATH/src/github.com/golang/lint/misc/vim

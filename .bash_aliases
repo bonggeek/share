@@ -6,6 +6,8 @@ alias ....='cd ../..'
 alias ......='cd ../../..'
 alias t='cat'
 alias copy='cp'
+alias md='mkdir'
+alias rd='rmdir'
 
 alias home='cd ~'
 alias del='rm'
