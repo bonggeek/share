@@ -116,6 +116,17 @@ if ! shopt -oq posix; then
   fi
 fi
 
-export GOPATH=$HOME/go
-export PATH=~/share:$PATH:$GOROOT/bin:$GOPATH/bin
+code () {
+     open /usr/share/code/code
+}
+
 export DOCKER_ID_USER="bonggeek"
+
+export GOROOT=/usr/local/go
+export PATH=$PATH:$GOROOT/bin
+
+
+export ENLISTMENTROOT=$HOME/hanarp # or wherever your repo is located
+export GOPATH=$HOME/go:$ENLISTMENTROOT:$ENLISTMENTROOT/vendor
+export PATH=$PATH:${GOPATH//://bin:}/bin
+
