@@ -56,3 +56,8 @@ GTAGS
 
 # PyCharm files (and other IntelliJ based IDE's)
 /**/.idea
+
+# terraform
+.terraform/**/*
+*terraform.tfstate*
+
