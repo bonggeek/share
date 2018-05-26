@@ -66,6 +66,12 @@ resource "azurerm_public_ip" "devPublicIp" {
     resource_group_name             = "${azurerm_resource_group.rg.name}"
     location                        = "${var.region}"
     public_ip_address_allocation    = "dynamic"
+    idle_timeout_in_minutes         = 30
+    domain_name_label               = "${var.userName}-clouddevbox"
+}
+
+locals {
+    vmFqdn = "${azurerm_public_ip.devPublicIp.fqdn}"
 }
 
 resource "azurerm_network_security_group" "devNsg" {
@@ -297,12 +303,12 @@ resource "azurerm_virtual_machine" "devVirtualMachine" {
         enabled     = "true"
         storage_uri = "${azurerm_storage_account.diagStorage.primary_blob_endpoint}"
     }
-
+    
     tags {
         generatedby = "terraform"
         author      = "abhinab@microsoft.com"
     }
-
+    
     provisioner "remote-exec" {
         inline = [
             "whoami > /tmp/ahem2.txt",
@@ -312,49 +318,16 @@ resource "azurerm_virtual_machine" "devVirtualMachine" {
             type     = "ssh"
             user     = "${var.userName}"
             password = "${var.password}"
-            timeout = "10m"
-        }
-
-    }
-}
-
-/*
-resource null_resource "setup"{
-    provisioner "remote-exec" {
-        inline = [
-            "whoami > /tmp/ahem1.txt",
-        ]
-
-        connection {
-            type     = "ssh"
-            user     = "${var.userName}"
-            password = "${var.password}"
-            host 
+            timeout  = "20m"
+            host     = "${local.vmFqdn}"
         }
     }
 }
-*/
-/*
-resource "azurerm_virtual_machine_extension" "deploy2" {
-    name                   = "deployCloudBox2"
-    resource_group_name    = "${azurerm_resource_group.rg.name}"rp
-    location               = "${var.region}"
-    virtual_machine_name = "${azurerm_virtual_machine.devVirtualMachine.name}"
-    publisher = "Microsoft.Compute"
-    type = "CustomScriptExtension"
-    type_handler_version = "1.8"
-    settings = <<SETTINGS
-    {
-        "fileUris" : ["https://raw.githubusercontent.com/bonggeek/share/master/testscript.sh"],
-        "commandToExecute": "bash testscript.sh"
-    }
-    SETTINGS
-}
-*/
+
 // -------------------------------------------------------------------------
 // Print out login information
 // -------------------------------------------------------------------------
 output "ip" {
   value = "Created vm ${azurerm_virtual_machine.devVirtualMachine.id}"
-  //value = "Virtual machine for user ${var.userName} created"
+  value = "Connect using ${var.userName}@${local.vmFqdn}"
 }
