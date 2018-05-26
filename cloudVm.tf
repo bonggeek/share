@@ -129,6 +129,30 @@ resource "azurerm_network_security_group" "devNsg" {
     security_rule {
         direction                   = "Inbound"
         priority                    = 106
+        name                        = "SSHFromMyMachine"
+        destination_port_range      = "22"
+        protocol                    = "TCP"
+        source_address_prefix       = "52.250.118.235"
+        source_port_range           = "*"
+        destination_address_prefix  = "*"
+        access                      = "Allow"
+    }
+
+    security_rule {
+        direction                   = "Inbound"
+        priority                    = 107
+        name                        = "RDPFromMyMachine"
+        destination_port_range      = "3389"
+        protocol                    = "TCP"
+        source_address_prefix       = "52.250.118.235"
+        source_port_range           = "*"
+        destination_address_prefix  = "*"
+        access                      = "Allow"
+    }
+
+    security_rule {
+        direction                   = "Inbound"
+        priority                    = 108
         name                        = "AllowVnetInBound"
         destination_port_range      = "*"
         protocol                    = "*"
@@ -140,7 +164,7 @@ resource "azurerm_network_security_group" "devNsg" {
 
     security_rule {
         direction                   = "Inbound"
-        priority                    = 107
+        priority                    = 109
         name                        = "AllowAzLoadBalancer"
         destination_port_range      = "*"
         protocol                    = "*"
@@ -185,7 +209,8 @@ resource "azurerm_network_security_group" "devNsg" {
         destination_address_prefix  = "Internet"
         access                      = "Allow"
     }
-        security_rule {
+    
+    security_rule {
         direction                   = "Outbound"
         priority                    = 4096
         name                        = "DenyAllOutBound"
@@ -243,11 +268,13 @@ resource "azurerm_virtual_machine" "devVirtualMachine" {
     vm_size                     = "${var.vm_size}"
 
     storage_os_disk {
-        name = "osDisk"
+        name = "osDisk${var.userName}"
         caching = "ReadWrite"
         create_option = "FromImage"
         managed_disk_type = "Premium_LRS"
     }
+
+    delete_os_disk_on_termination = true
 
     storage_image_reference {
         publisher   = "Canonical"
@@ -275,8 +302,55 @@ resource "azurerm_virtual_machine" "devVirtualMachine" {
         generatedby = "terraform"
         author      = "abhinab@microsoft.com"
     }
+
+    provisioner "remote-exec" {
+        inline = [
+            "whoami > /tmp/ahem2.txt",
+        ]
+
+        connection {
+            type     = "ssh"
+            user     = "${var.userName}"
+            password = "${var.password}"
+            timeout = "10m"
+        }
+
+    }
 }
 
+/*
+resource null_resource "setup"{
+    provisioner "remote-exec" {
+        inline = [
+            "whoami > /tmp/ahem1.txt",
+        ]
+
+        connection {
+            type     = "ssh"
+            user     = "${var.userName}"
+            password = "${var.password}"
+            host 
+        }
+    }
+}
+*/
+/*
+resource "azurerm_virtual_machine_extension" "deploy2" {
+    name                   = "deployCloudBox2"
+    resource_group_name    = "${azurerm_resource_group.rg.name}"rp
+    location               = "${var.region}"
+    virtual_machine_name = "${azurerm_virtual_machine.devVirtualMachine.name}"
+    publisher = "Microsoft.Compute"
+    type = "CustomScriptExtension"
+    type_handler_version = "1.8"
+    settings = <<SETTINGS
+    {
+        "fileUris" : ["https://raw.githubusercontent.com/bonggeek/share/master/testscript.sh"],
+        "commandToExecute": "bash testscript.sh"
+    }
+    SETTINGS
+}
+*/
 // -------------------------------------------------------------------------
 // Print out login information
 // -------------------------------------------------------------------------
