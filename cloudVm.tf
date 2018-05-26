@@ -309,9 +309,25 @@ resource "azurerm_virtual_machine" "devVirtualMachine" {
         author      = "abhinab@microsoft.com"
     }
     
+    provisioner "file" {
+        source = "cloudVMsetup.sh"
+        destination = "/tmp/cloudVMsetup.sh"
+
+        connection {
+            type     = "ssh"
+            user     = "${var.userName}"
+            password = "${var.password}"
+            timeout  = "20m"
+            host     = "${local.vmFqdn}"
+        }
+    }
+
     provisioner "remote-exec" {
         inline = [
-            "whoami > /tmp/ahem2.txt",
+            "whoami > /tmp/started",
+            "chmod +x /tmp/cloudVMsetup.sh",
+            "/tmp/cloudVMsetup.sh",
+            "whoami > /tmp/end",
         ]
 
         connection {
