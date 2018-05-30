@@ -60,4 +60,4 @@ GTAGS
 # terraform
 .terraform/**/*
 *terraform.tfstate*
-
+.terraform

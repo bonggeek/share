@@ -5,18 +5,31 @@
 // -------------------------------------------------------------------------
 // Configurations
 // -------------------------------------------------------------------------
-variable "subsId" {}
-variable "clientId" {}
-variable "secret" {}
-variable "tenantId" {}
+variable "subsId" {
+    default = ""
+}
+
+variable "clientId" {
+    default = ""
+}
+
+variable "secret" {
+    default = ""
+}
+
+variable "tenantId" {
+    default = ""
+}
+
 variable "region" {
     default = "westus2"
 }
 
-// TODO: This will be larger, try F8s OR F16s 
+// TODO: This will be larger, try F8s OR F16s
 variable vm_size {
     default = "Standard_F2s"
 }
+
 variable "userName" {
     description = "E.g. your name abhinaba, for second machine use say abhinaba2"
 }
@@ -48,14 +61,15 @@ resource "azurerm_resource_group" "rg" {
 // Networking
 // -------------------------------------------------------------------------
 resource "azurerm_virtual_network" "devVNet" {
-    name                = "cloudDevBoxVmVnet"
+    name                = "${var.userName}cloudDevBoxVmVnet"
     resource_group_name = "${azurerm_resource_group.rg.name}"
     location            = "${var.region}"
     address_space       = ["10.0.0.0/16"]
+    
 }
 
 resource "azurerm_subnet" "devSubnet" {
-    name                    = "cloudDevBoxVmSubnet"
+    name                    = "${var.userName}cloudDevBoxVmSubnet"
     resource_group_name     = "${azurerm_resource_group.rg.name}"
     virtual_network_name    = "${azurerm_virtual_network.devVNet.name}"
     address_prefix          = "10.0.2.0/24"
@@ -74,6 +88,18 @@ locals {
     vmFqdn = "${azurerm_public_ip.devPublicIp.fqdn}"
 }
 
+// Todo add rule for rdp/ssh from home ip address 102 103
+variable "network_rules" {
+    default = {
+        "0" = "131.107.0.0/16,22,TCP"
+        "1" = "131.107.0.0/16,3389,TCP"
+        "2" = "207.68.190.32/27,22,TCP"
+        "3" = "207.68.190.32/27,3389,TCP"
+        "4" = "52.250.118.235,22,TCP"
+        "5" = "52.250.118.235,3389,TCP"
+    }
+}
+
 resource "azurerm_network_security_group" "devNsg" {
     name = "${var.userName}CloudDevBoxNsg"
     resource_group_name = "${azurerm_resource_group.rg.name}"
@@ -81,84 +107,7 @@ resource "azurerm_network_security_group" "devNsg" {
 
     security_rule {
         direction                   = "Inbound"
-        priority                    = 100
-        name                        = "SSHFromCorpnet"
-        destination_port_range      = "22"
-        protocol                    = "TCP"
-        source_address_prefix       = "131.107.0.0/16"
-        source_port_range           = "*"
-        destination_address_prefix  = "*"
-        access                      = "Allow"
-    }
-
-    security_rule {
-        direction                   = "Inbound"
-        priority                    = 101
-        name                        = "RDPFromCorpnet"
-        destination_port_range      = "3389"
-        protocol                    = "TCP"
-        source_address_prefix       = "131.107.0.0/16"
-        source_port_range           = "*"
-        destination_address_prefix  = "*"
-        access                      = "Allow"
-    }
-
-    /*
-    Todo add rule for rdp/ssh from home ip address
-    102 103
-    
-    */
-    security_rule {
-        direction                   = "Inbound"
-        priority                    = 104
-        name                        = "SSHFromSAW"
-        destination_port_range      = "22"
-        protocol                    = "TCP"
-        source_address_prefix       = "207.68.190.32/27"
-        source_port_range           = "*"
-        destination_address_prefix  = "*"
-        access                      = "Allow"
-    }
-
-    security_rule {
-        direction                   = "Inbound"
-        priority                    = 105
-        name                        = "RDPFromSAW"
-        destination_port_range      = "3389"
-        protocol                    = "TCP"
-        source_address_prefix       = "207.68.190.32/27"
-        source_port_range           = "*"
-        destination_address_prefix  = "*"
-        access                      = "Allow"
-    }
-
-    security_rule {
-        direction                   = "Inbound"
-        priority                    = 106
-        name                        = "SSHFromMyMachine"
-        destination_port_range      = "22"
-        protocol                    = "TCP"
-        source_address_prefix       = "52.250.118.235"
-        source_port_range           = "*"
-        destination_address_prefix  = "*"
-        access                      = "Allow"
-    }
-
-    security_rule {
-        direction                   = "Inbound"
-        priority                    = 107
-        name                        = "RDPFromMyMachine"
-        destination_port_range      = "3389"
-        protocol                    = "TCP"
-        source_address_prefix       = "52.250.118.235"
-        source_port_range           = "*"
-        destination_address_prefix  = "*"
-        access                      = "Allow"
-    }
-
-    security_rule {
-        direction                   = "Inbound"
-        priority                    = 108
+        priority                    = 200
         name                        = "AllowVnetInBound"
         destination_port_range      = "*"
         protocol                    = "*"
@@ -170,7 +119,7 @@ resource "azurerm_network_security_group" "devNsg" {
 
     security_rule {
         direction                   = "Inbound"
-        priority                    = 109
+        priority                    = 201
         name                        = "AllowAzLoadBalancer"
         destination_port_range      = "*"
         protocol                    = "*"
@@ -227,6 +176,24 @@ resource "azurerm_network_security_group" "devNsg" {
         destination_address_prefix  = "*"
         access                      = "Deny"
     }
+}
+
+resource "azurerm_network_security_rule" "allowrules" {
+    name                        = "${var.userName}rules"
+    resource_group_name         = "${azurerm_resource_group.rg.name}"
+    network_security_group_name = "${azurerm_network_security_group.devNsg.name}"
+
+    direction                   = "Inbound"
+    priority                    = "${count.index + 100}"
+    name                        = "Rule${count.index}"
+    source_address_prefix       = "${element(split(",", var.network_rules[count.index]), 0)}"
+    destination_port_range      = "${element(split(",", var.network_rules[count.index]), 1)}"
+    protocol                    = "${element(split(",", var.network_rules[count.index]), 2)}"
+    source_port_range           = "*"
+    destination_address_prefix  = "*"
+    access                      = "Allow"
+
+    count = "${length(var.network_rules)}"
 }
 
 resource "azurerm_network_interface" "devNic" {
