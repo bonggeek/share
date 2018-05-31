@@ -2,7 +2,8 @@
 
 ####################################################################################################
 # Script to drive terraform to setup a dev box with rdp capability in the cloud
-#
+# Run this directly by 
+# curl -sSL https://raw.githubusercontent.com/bonggeek/share/master/cloudbox/cloudshelldeploy.sh | bash"
 
 # Check to see if terraform is present
 if ! type "terraform" > /dev/null 2>&1 ; then
@@ -11,10 +12,16 @@ if ! type "terraform" > /dev/null 2>&1 ; then
     exit 1
 fi
 
+# check to see az CLI is all setup
 if ! type "az" > /dev/null 2>&1 ; then
     echo "Azure CLI missing. Please install"
     exit 1
 fi
+
+echo "This script expects you are running from shell where you have logged and that"
+echo "you have set a subscription under which VM can be created. E.g."
+echo "az login"
+echo "az account set --subscription=\"ef26d084-5353-49bb-856d-e40444a93cb3\""
 
 # Get the current IP address. We will add this to the VM access allow rule so that 
 # from this session we can run remote scripts to configure the VM
@@ -25,9 +32,6 @@ echo 'Downloading terraform files'
 curl -s -O https://raw.githubusercontent.com/bonggeek/share/master/cloudbox/cloudVM.tf
 curl -s -O https://raw.githubusercontent.com/bonggeek/share/master/cloudbox/cloudVMsetup.sh
 echo 'Downloaded terraform files'
-
-#az login
-#az account set --subscription="ef26d084-5353-49bb-856d-e40444a93cb3"
 
 echo "Initializing terraform"
 terraform init > /dev/null
