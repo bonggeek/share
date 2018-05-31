@@ -44,7 +44,5 @@ else
     password=$2
 fi
 
-# TODO: use apply -auto-approve
-#cmd="terraform plan -var-file=\"~/terraform/auth.tvars\"  -var 'userName=$username' -var 'password=$password'"
 cmd="terraform apply -auto-approve -var 'userName=$username' -var 'password=$password' -var 'network_allow_rules={ \"0\" = \"131.107.0.0/16,22,TCP\", \"1\" = \"131.107.0.0/16,3389,TCP\", \"2\" = \"207.68.190.32/27,22,TCP\", \"3\" = \"207.68.190.32/27,3389,TCP\", \"4\" = \"52.250.118.235,22,TCP\", \"5\" = \"52.250.118.235,3389,TCP\", \"6\" = \"$shellip,22,TCP\" }'"
 eval $cmd

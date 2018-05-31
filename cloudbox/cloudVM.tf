@@ -15,20 +15,18 @@ variable "network_allow_rules" {
   type = "map"
 
   /*
+  This is a list of IP addresses to be opened in NSG rules. The format is
+  IP,PORT,Protocol
   default = {
     "0" = "131.107.0.0/16,22,TCP"
     "1" = "131.107.0.0/16,3389,TCP"
-    "2" = "207.68.190.32/27,22,TCP"
-    "3" = "207.68.190.32/27,3389,TCP"
-    "4" = "52.250.118.235,22,TCP"
-    "5" = "52.250.118.235,3389,TCP"
   }
   */
 }
 
-// TODO: This will be larger, try F8s OR F16s
+// Larger VMs like F8s OR F16s work better, for basic testing F2s also works
 variable vm_size {
-  default = "Standard_F2s"
+  default = "Standard_F8s"
 }
 
 variable "userName" {
