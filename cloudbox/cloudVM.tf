@@ -44,7 +44,7 @@ variable "password" {
 provider "azurerm" {}
 
 resource "azurerm_resource_group" "rg" {
-  name     = "cloudDevBoxVMResourceGroup"
+  name     = "${var.userName}CloudDevBoxRG"
   location = "${var.region}"
 
   tags {
