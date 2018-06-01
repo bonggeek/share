@@ -37,9 +37,8 @@ custom IP-ranges
     # Make changes to cloudshelldeploy if needed
     ./cloudshelldeploy.sh abhinab
 
-Once terraform is done installing 
-Then RDP from windows machine using mstsc.exe.
+Once terraform is done installing RDP from windows machine using mstsc.exe.
 
-**NOTE: In my experience 1080p resulotions work well**, 4K lags too much to be 
+**NOTE: In my experience 1080p resolution works well**, 4K lags too much to be 
 useful. Since mstsc default is full-screen be careful if you are working 
-on hi-res display.
+on hi-res display and explicitly use 1080p resolution.
