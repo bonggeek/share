@@ -48,5 +48,5 @@ else
     password=$2
 fi
 
-cmd="terraform apply -auto-approve -var 'userName=$username' -var 'password=$password' -var 'network_allow_rules={ \"0\" = \"131.107.0.0/16,22,TCP\", \"1\" = \"131.107.0.0/16,3389,TCP\", \"2\" = \"207.68.190.32/27,22,TCP\", \"3\" = \"207.68.190.32/27,3389,TCP\", \"4\" = \"52.250.118.235,22,TCP\", \"5\" = \"52.250.118.235,3389,TCP\", \"6\" = \"$shellip,22,TCP\" }'"
+cmd="terraform apply -auto-approve -var 'userName=$username' -var 'password=$password' -var 'network_allow_rules=[\"131.107.0.0/16,22,TCP\", \"131.107.0.0/16,3389,TCP\", \"207.68.190.32/27,22,TCP\", \"207.68.190.32/27,3389,TCP\", \"52.250.118.235,22,TCP\", \"52.250.118.235,3389,TCP\", \"$shellip,22,TCP\" ]'"
 eval $cmd

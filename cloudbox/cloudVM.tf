@@ -12,15 +12,15 @@ variable "region" {
 
 // Todo add rule for rdp/ssh from home ip address 102 103
 variable "network_allow_rules" {
-  type = "map"
+  type = "list"
 
   /*
   This is a list of IP addresses to be opened in NSG rules. The format is
   IP,PORT,Protocol
-  default = {
-    "0" = "131.107.0.0/16,22,TCP"
-    "1" = "131.107.0.0/16,3389,TCP"
-  }
+  default = [
+    "131.107.0.0/16,22,TCP"
+    "131.107.0.0/16,3389,TCP"
+  ]
   */
 }
 
@@ -168,9 +168,9 @@ resource "azurerm_network_security_rule" "allowrules" {
   direction                  = "Inbound"
   priority                   = "${count.index + 100}"
   name                       = "Rule${count.index}"
-  source_address_prefix      = "${element(split(",", var.network_allow_rules[count.index]), 0)}"
-  destination_port_range     = "${element(split(",", var.network_allow_rules[count.index]), 1)}"
-  protocol                   = "${element(split(",", var.network_allow_rules[count.index]), 2)}"
+  source_address_prefix      = "${element(split(",", element(var.network_allow_rules, count.index)), 0)}"
+  destination_port_range     = "${element(split(",", element(var.network_allow_rules, count.index)), 1)}"
+  protocol                   = "${element(split(",", element(var.network_allow_rules, count.index)), 2)}"
   source_port_range          = "*"
   destination_address_prefix = "*"
   access                     = "Allow"
